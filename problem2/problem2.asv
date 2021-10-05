@@ -1,0 +1,55 @@
+X_train=[];
+y_train=[];
+centroids=zeros(4,13);
+words=["left";"right";"move";"stop"];
+for i=1:4
+    for j=1:10
+        [audio,fs]=audioread(strcat('train/',words(i,:),int2str(j),'.wav'));
+        audio=audio(:,1)+audio(:,2);
+        mel=sum(mfcc(audio,fs),1);
+        mel=mel(2:end);
+        X_train=[X_train;mel];
+        y_train=[y_train;words(i,:)];
+    end
+end
+mu=mean(X_train,1);
+sigma=std(X_train,1);
+X_train=(X_train-mu)./sigma;
+index=1;
+for i=1:40
+    centroids(index,:)=centroids(index,:)+X_train(i,:);
+    if mod(i,10)==0
+        index=index+1;
+    end
+end
+centroids=centroids./10;
+X_test=[];
+y_test=[];
+y_pred=[];
+for i=1:4
+    for j=1:5
+        [audio,fs]=audioread(strcat('test/',words(i,:),int2str(j),'.wav'));
+        audio=audio(:,1)+audio(:,2);
+        mel=sum(mfcc(audio,fs,'WindowLength',windowLength,'OverlapLength',overlapLength),1);
+        mel=mel(2:end);
+        X_test=[X_test;mel];
+        y_test=[y_test;words(i,:)];
+    end
+end
+mu=mean(X_test,1);
+sigma=std(X_test,1);
+X_test=(X_test-mu)./sigma;
+for i=1:20
+    x=X_test(i,:);
+    min=inf;
+    index=0;
+    for j=1:4
+        dist=sum((x-centroids(j,:)).^2);
+        if dist<min
+            min=dist;
+            index=j;
+        end
+    end
+    y_pred=[y_pred;words(index)];
+end
+fprintf(y_pred,y_t);
